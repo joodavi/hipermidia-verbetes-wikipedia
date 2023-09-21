@@ -1,22 +1,18 @@
 const parser = new DOMParser()
 const xhttp = new XMLHttpRequest()
 
-// criar um fator ocorrencia/tamanho_texto
-
-const hero = document.getElementById("hero")
-
 const searchInput = document.getElementById("searchInput")
 const searchButton = document.getElementById("searchButton")
-var searchTerm = ""
-var searchList = ``
 
 var pagesArray = []
+
+let loading = true
 
 function loadXml() {
     xhttp.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             var xmlString = this.responseText
-            searchXML(xmlString)
+            saveXml(xmlString)
         }
     }
 
@@ -24,50 +20,52 @@ function loadXml() {
     xhttp.send()
 }
 
-function addStyle() {
-    searchInput.style.marginBottom = "0px"
-    searchInput.style.width = "65%"
-    hero.style.width = "95%"
-    hero.style.flexDirection = "row"
-}
-
-function searchXML(xmlString) {
+function saveXml(xmlString) {
     xml = parser.parseFromString(xmlString, "text/html")
     var pages = xml.querySelectorAll("page")
+    pagesArray = pages
 
+    return pagesArray
+}
+
+loadXml()
+
+const hero = document.getElementById("hero")
+
+var searchTerm = ""
+var searchList = ``
+
+function search() {
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
 
-    searchList = ``
-    pagesArray = []
-
-    pages.forEach(function (page) {
-        var title = page.querySelector("title").textContent
-        var text = page.querySelector("text").textContent
-
-        if (text.toLowerCase().includes(searchTerm)) {
-            pagesArray.push({
-                title: title,
-                text: text,
-                occurrences: countOccurrences(title, text, searchTerm),
-                relevanceFactor: factor(title, text, searchTerm)
-            })
-        }
-    })
-
-    pagesArray.sort(function (a, b) {
-        return b.occurrences - a.occurrences
-    })
-
-    if ((pagesArray.length == 0) || (searchTerm === "") || (searchTerm === " ")) {
-        searchList += "<p>" +
-            "Nenhum resultado encontrado" +
-            "</p>"
+    if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 1)) {
+        searchEmpty()
     } else {
+        searchList = ``
+        pagesObject = []
+
         pagesArray.forEach(function (page) {
+            var title = page.querySelector("title").textContent
+            var text = page.querySelector("text").textContent
+
+            if (text.toLowerCase().includes(searchTerm)) {
+                pagesObject.push({
+                    title: title,
+                    text: text,
+                    occurrences: countOccurrences(title, text, searchTerm)
+                })
+            }
+        })
+
+        pagesObject.sort(function (a, b) {
+            return b.occurrences - a.occurrences
+        })
+
+        pagesObject.forEach(function (page) {
             searchList +=
                 "<summary>" +
-                page.title + " <span>" + page.occurrences + " ocorrências | rf: " + Math.floor(page.relevanceFactor) + "</span>" +
+                page.title + " <span>" + page.occurrences + " ocorrências" + "</span>" +
                 "<details>" +
                 page.text +
                 "</details>" +
@@ -102,10 +100,15 @@ function countOccurrences(title, text, searchTerm) {
     return count
 }
 
-function factor(title, text, searchTerm) {
-    var count = countOccurrences(title, text, searchTerm)
+const searchEmpty = () => {
+    searchList += "<p style='padding: 0 3.5em'>" +
+        "Nenhum resultado encontrado" +
+        "</p>"
+}
 
-    var factor = (text.length/count)
-
-    return factor
+function addStyle() {
+    searchInput.style.marginBottom = "0px"
+    searchInput.style.width = "65%"
+    hero.style.width = "95%"
+    hero.style.flexDirection = "row"
 }

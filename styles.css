@@ -8,8 +8,8 @@ body {
     background: #2e2e2e;
     color: #f0f8ff;
     font-family: sans-serif;
-    height: 100vw;
-    padding: 2em;
+    height: 100vh;
+    margin-top: 2em;
 }
 
 #hero {
@@ -30,7 +30,7 @@ body {
     padding: .8em;
     padding-left: 1.5em;
     margin-bottom: 1em;
-    width: 95%;
+    width: 75%;
 }
 
 #hero > input:focus {
@@ -64,7 +64,7 @@ body {
 #xmlData > summary {
     background: #383838;
     margin-top: 1em;
-    padding: .5em 1.5em;
+    padding: .5em 3.5em;
 }
 
 #xmlData > summary > details {
