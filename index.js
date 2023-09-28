@@ -4,6 +4,9 @@ const xhttp = new XMLHttpRequest()
 const searchInput = document.getElementById("searchInput")
 const searchButton = document.getElementById("searchButton")
 
+var cache = {
+
+}
 var pagesArray = []
 
 let loading = true
@@ -12,20 +15,15 @@ function loadXml() {
     xhttp.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             var xmlString = this.responseText
-            saveXml(xmlString)
+            xml = parser.parseFromString(xmlString, "text/html")
+            var pages = xml.querySelectorAll("page")
+            pagesArray = pages
+
+            return pagesArray
         }
     }
-
     xhttp.open("GET", "data/verbetesWikipediaFull.xml", true)
     xhttp.send()
-}
-
-function saveXml(xmlString) {
-    xml = parser.parseFromString(xmlString, "text/html")
-    var pages = xml.querySelectorAll("page")
-    pagesArray = pages
-
-    return pagesArray
 }
 
 loadXml()
@@ -33,47 +31,49 @@ loadXml()
 const hero = document.getElementById("hero")
 
 var searchTerm = ""
-var searchList = ``
+var searchList = ""
 
 function search() {
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
 
-    if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 1)) {
-        searchEmpty()
+    if (cache[searchTerm]) {
+        pagesObject = cache[searchTerm]
+
+        showResults(pagesObject)
     } else {
-        searchList = ``
-        pagesObject = []
+        if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 3)) {
+            searchEmpty()
+        } else {
+            pagesObject = []
 
-        pagesArray.forEach(function (page) {
-            var title = page.querySelector("title").textContent
-            var text = page.querySelector("text").textContent
+            pagesArray.forEach(function (page) {
+                var title = page.querySelector("title").textContent
+                var text = page.querySelector("text").textContent
 
-            if (text.toLowerCase().includes(searchTerm)) {
-                pagesObject.push({
-                    title: title,
-                    text: text,
-                    occurrences: countOccurrences(title, text, searchTerm)
-                })
-            }
-        })
+                if (text.toLowerCase().includes(searchTerm)) {
+                    pagesObject.push({
+                        title: title,
+                        text: text,
+                        occurrences: countOccurrences(title, text, searchTerm)
+                    })
+                }
+            })
 
-        pagesObject.sort(function (a, b) {
-            return b.occurrences - a.occurrences
-        })
+            pagesObject.sort(function (a, b) {
+                return b.occurrences - a.occurrences
+            })
 
-        pagesObject.forEach(function (page) {
-            searchList +=
-                "<summary>" +
-                page.title + " <span>" + page.occurrences + " ocorrências" + "</span>" +
-                "<details>" +
-                page.text +
-                "</details>" +
-                "</summary>"
-        })
+            pagesObject = pagesObject.slice(0, 50)
+
+            cache[searchTerm] = pagesObject
+
+            showResults(pagesObject)
+        }
     }
-
+    
     document.getElementById("xmlData").innerHTML = searchList
+    searchList = ""
 }
 
 function countOccurrences(title, text, searchTerm) {
@@ -98,6 +98,18 @@ function countOccurrences(title, text, searchTerm) {
     })
 
     return count
+}
+
+function showResults(pagesObject) {
+    pagesObject.forEach(function (page) {
+        searchList +=
+            "<summary>" +
+            page.title + " <span>" + page.occurrences + " ocorrências" + "</span>" +
+            "<details>" +
+            page.text +
+            "</details>" +
+            "</summary>"
+    })
 }
 
 const searchEmpty = () => {
