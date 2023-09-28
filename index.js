@@ -4,12 +4,8 @@ const xhttp = new XMLHttpRequest()
 const searchInput = document.getElementById("searchInput")
 const searchButton = document.getElementById("searchButton")
 
-var cache = {
-
-}
+var cache = {}
 var pagesArray = []
-
-let loading = true
 
 function loadXml() {
     xhttp.onreadystatechange = function () {
@@ -18,7 +14,7 @@ function loadXml() {
             xml = parser.parseFromString(xmlString, "text/html")
             var pages = xml.querySelectorAll("page")
             pagesArray = pages
-
+            console.log("tempo de carregamento do xml: ")
             return pagesArray
         }
     }
@@ -41,6 +37,7 @@ function search() {
         pagesObject = cache[searchTerm]
 
         showResults(pagesObject)
+        console.log(`buscando no cache o termo "${searchTerm}"`)
     } else {
         if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 3)) {
             searchEmpty()
@@ -69,9 +66,11 @@ function search() {
             cache[searchTerm] = pagesObject
 
             showResults(pagesObject)
+
+            console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
         }
     }
-    
+
     document.getElementById("xmlData").innerHTML = searchList
     searchList = ""
 }
