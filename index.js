@@ -1,19 +1,22 @@
 const parser = new DOMParser()
 const xhttp = new XMLHttpRequest()
 
+const hero = document.getElementById("hero")
 const searchInput = document.getElementById("searchInput")
 const searchButton = document.getElementById("searchButton")
 
+var searchTerm = ""
+var searchList = ""
+
 var cache = {}
-var pagesArray = []
+var pagesArray = {}
 
 function loadXml() {
     xhttp.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
             var xmlString = this.responseText
-            xml = parser.parseFromString(xmlString, "text/html")
-            var pages = xml.querySelectorAll("page")
-            pagesArray = pages
+            xmlString = parser.parseFromString(xmlString, "text/html")
+            pagesArray = xmlString.querySelectorAll("page")
             console.log("tempo de carregamento do xml: ")
             return pagesArray
         }
@@ -24,12 +27,7 @@ function loadXml() {
 
 loadXml()
 
-const hero = document.getElementById("hero")
-
-var searchTerm = ""
-var searchList = ""
-
-function search() {
+const search = () => {
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
 
@@ -57,11 +55,9 @@ function search() {
                 }
             })
 
-            pagesObject.sort(function (a, b) {
+            pagesObject = pagesObject.sort(function (a, b) {
                 return b.occurrences - a.occurrences
-            })
-
-            pagesObject = pagesObject.slice(0, 50)
+            }).slice(0, 50)
 
             cache[searchTerm] = pagesObject
 
@@ -70,18 +66,12 @@ function search() {
             console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
         }
     }
-
-    document.getElementById("xmlData").innerHTML = searchList
-    searchList = ""
 }
 
 function countOccurrences(title, text, searchTerm) {
-    title = title.toLowerCase()
-    text = text.toLowerCase()
-
-    title = title.split(' ')
-    text = text.split(' ')
-
+    title = title.toLowerCase().split(' ')
+    text = text.toLowerCase().split(' ')
+    
     var count = 0
 
     text.forEach(function (text) {
@@ -109,15 +99,20 @@ function showResults(pagesObject) {
             "</details>" +
             "</summary>"
     })
+    document.getElementById("xmlData").innerHTML = searchList
+    searchList = ""
 }
 
 const searchEmpty = () => {
     searchList += "<p style='padding: 0 3.5em'>" +
         "Nenhum resultado encontrado" +
         "</p>"
+    
+    document.getElementById("xmlData").innerHTML = searchList
+    searchList = ""
 }
 
-function addStyle() {
+const addStyle = () => {
     searchInput.style.marginBottom = "0px"
     searchInput.style.width = "65%"
     hero.style.width = "95%"
