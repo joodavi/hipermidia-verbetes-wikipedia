@@ -20,25 +20,26 @@ function loadingXml() {
             pagesArray = xmlString.querySelectorAll("page")
             console.log("tempo de carregamento do xml: ")
             pagesArray.forEach(function (page) {
+                var id = page.querySelector("id").textContent
                 var title = page.querySelector("title").textContent
                 var text = page.querySelector("text").textContent
                 cacheXml.push({
+                    id: id,
                     title: title,
                     text: text,
                     occurrences: countWordOccurrences(title, text)
                 })
                 
             })
-            return cacheXml
         }
     }
-    xhttp.open("GET", "data/verbetesWikipedia.xml", true)
+    xhttp.open("GET", "data/verbetesWikipediaFull.xml", true)
     xhttp.send()
 }
 
 loadingXml()
 
-function search() {
+const search = () => {
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
     if (cacheResult[searchTerm]) {
@@ -51,30 +52,25 @@ function search() {
             searchEmpty()
         } else {
             pagesObject = []
-            cacheXml.forEach(function (page) {
-
-                if (page.title.includes(searchTerm) || page.text.includes(searchTerm)) {
+            for (let i=0; i<cacheXml.length; i++) {
+                if(cacheXml[i].title.toLowerCase().includes(searchTerm) || cacheXml[i].text.toLowerCase().includes(searchTerm)) {
                     pagesObject.push({
-                        title: page.title,
-                        text: page.text,
-                        occurrences: page.result[word]
+                        id: cacheXml[i].id,
+                        title: cacheXml[i].title,
+                        text: cacheXml[i].text,
+                        occurrences: countOccurrences(cacheXml[i].title, cacheXml[i].text, searchTerm)
                     })
                 }
-            })
-            
-            var results = cacheXml.filter(entry => {
-                const titleMatch = entry.title.toLowerCase().includes(searchTerm)
-                const textMatch = entry.text.toLowerCase().includes(searchTerm)
-        
-                return titleMatch || textMatch
-            })
-            
-            console.log(results.sort((a, b) => b.occurrences[searchTerm] - a.occurrences[searchTerm]))
+            }
+
+            pagesObject = pagesObject.sort(function (a, b) {
+                return b.occurrences - a.occurrences
+            }).slice(0, 50)
     
-            cacheResult[searchTerm] = results
+            cacheResult[searchTerm] = pagesObject
         
             console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
-            showResults(results.slice(0, 50))
+            showResults(pagesObject)
         }
     }
 }
@@ -84,7 +80,9 @@ function showResults(results) {
     results.forEach(function (page) {
         searchList +=
             "<summary>" +
-            page.title +
+            " <span>" + "ID: " + page.id + "</span> " + 
+            page.title + 
+            " <span>" + page.occurrences + " occurrences" + "</span>" + 
             "<details>" +
             page.text +
             "</details>" +
@@ -96,26 +94,39 @@ function showResults(results) {
 function countWordOccurrences(title, text) {
     const result = {}
 
-    title = title.toLowerCase().split(' ').filter((word) => word.length >= 4)
-    text = text.toLowerCase().split(' ').filter((word) => word.length >= 4)
+    const words = [...title.toLowerCase().split(' '), ...text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
 
-    for (let word of title) {
+    words.forEach(function (word) {
         if (result[word]) {
             result[word] += 10
         } else {
             result[word] = 10
         }
-    }
+    })
 
-    for (let word of text) {
+    words.forEach(function (word) {
         if (result[word]) {
             result[word]++
         } else {
-            result[word]= 1
+            result[word] = 1
         }
-    }
+    })
 
     return result
+}
+
+function countOccurrences(title, text, searchTerm) {
+    const words = [...title.toLowerCase().split(' '), ...text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
+    
+    var count = 0
+
+    words.forEach(function (word) {
+        if (word.includes(searchTerm)) {
+            count++
+        }
+    })
+
+    return count
 }
 
 const searchEmpty = () => {
