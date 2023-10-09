@@ -8,9 +8,9 @@ const searchButton = document.getElementById("searchButton")
 var searchTerm = ""
 var searchList = ""
 
+var cacheXml = []
 var cacheResult = {}
 var pagesArray = {}
-var cacheXml = []
 
 function loadingXml() {
     xhttp.onreadystatechange = function () {
@@ -29,7 +29,6 @@ function loadingXml() {
                     text: text,
                     occurrences: countWordOccurrences(title, text)
                 })
-                
             })
         }
     }
@@ -51,26 +50,28 @@ const search = () => {
         if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 3)) {
             searchEmpty()
         } else {
-            pagesObject = []
-            for (let i=0; i<cacheXml.length; i++) {
-                if(cacheXml[i].title.toLowerCase().includes(searchTerm) || cacheXml[i].text.toLowerCase().includes(searchTerm)) {
-                    pagesObject.push({
-                        id: cacheXml[i].id,
-                        title: cacheXml[i].title,
-                        text: cacheXml[i].text,
-                        occurrences: countOccurrences(cacheXml[i].title, cacheXml[i].text, searchTerm)
+            pages = []
+
+            cacheXml.forEach(function (page) {
+                if (page.occurrences[searchTerm]) {
+                    pages.push({
+                        id: page.id,
+                        title: page.title,
+                        text: page.text,
+                        occurrences: page.occurrences[searchTerm]
                     })
                 }
-            }
+            })
 
-            pagesObject = pagesObject.sort(function (a, b) {
+            pages = pages.sort(function (a, b) {
                 return b.occurrences - a.occurrences
             }).slice(0, 50)
-    
-            cacheResult[searchTerm] = pagesObject
-        
+
+            cacheResult[searchTerm] = pages
+
             console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
-            showResults(pagesObject)
+            
+            showResults(pages)
         }
     }
 }
@@ -80,9 +81,9 @@ function showResults(results) {
     results.forEach(function (page) {
         searchList +=
             "<summary>" +
-            " <span>" + "ID: " + page.id + "</span> " + 
-            page.title + 
-            " <span>" + page.occurrences + " occurrences" + "</span>" + 
+            " <span>" + "ID: " + page.id + "</span> " +
+            page.title +
+            " <span>" + page.occurrences + " occurrences" + "</span>" +
             "<details>" +
             page.text +
             "</details>" +
@@ -94,9 +95,10 @@ function showResults(results) {
 function countWordOccurrences(title, text) {
     const result = {}
 
-    const words = [...title.toLowerCase().split(' '), ...text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
+    title = title.toLowerCase().split(' ').filter((word) => word.length >= 4)
+    text = text.toLowerCase().split(' ').filter((word) => word.length >= 4)
 
-    words.forEach(function (word) {
+    title.forEach(function (word) {
         if (result[word]) {
             result[word] += 10
         } else {
@@ -104,7 +106,7 @@ function countWordOccurrences(title, text) {
         }
     })
 
-    words.forEach(function (word) {
+    text.forEach(function (word) {
         if (result[word]) {
             result[word]++
         } else {
@@ -115,22 +117,9 @@ function countWordOccurrences(title, text) {
     return result
 }
 
-function countOccurrences(title, text, searchTerm) {
-    const words = [...title.toLowerCase().split(' '), ...text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
-    
-    var count = 0
-
-    words.forEach(function (word) {
-        if (word.includes(searchTerm)) {
-            count++
-        }
-    })
-
-    return count
-}
-
 const searchEmpty = () => {
-    searchList += "<p style='padding: 0 3.5em'>" +
+    searchList +=
+        "<p style='padding: 0 3.5em'>" +
         "Nenhum resultado encontrado" +
         "</p>"
 
