@@ -12,6 +12,7 @@ var cacheXml = []
 var cacheResult = {}
 var pagesArray = {}
 
+// função para parsear o xml e criar o cache
 function loadingXml() {
     xhttp.onreadystatechange = function () {
         if (this.readyState === 4 && this.status === 200) {
@@ -65,7 +66,7 @@ const search = () => {
 
             pages = pages.sort(function (a, b) {
                 return b.occurrences - a.occurrences
-            }).slice(0, 50)
+            }).slice(0, 30)
 
             cacheResult[searchTerm] = pages
 
@@ -76,25 +77,12 @@ const search = () => {
     }
 }
 
-function showResults(results) {
-    searchList = ""
-    results.forEach(function (page) {
-        searchList +=
-            "<summary>" +
-            " <span>" + "ID: " + page.id + "</span> " +
-            page.title +
-            " <span>" + page.occurrences + " occurrences" + "</span>" +
-            "<details>" +
-            page.text +
-            "</details>" +
-            "</summary>"
-    })
-    document.getElementById("xmlData").innerHTML = searchList
-}
-
+// contar as ocorrências, 10 para ocorrência no título, 1 para ocorrência no texto
 function countWordOccurrences(title, text) {
     const result = {}
 
+    // textos são colocados dentro de um vetor após serem separados com base em espaços em branco 
+    // também ocorre um filtro para que palavras com menos de 5 caracteres sejam retiradas do vetor e evitar operações desnecessárias
     title = title.toLowerCase().split(' ').filter((word) => word.length >= 4)
     text = text.toLowerCase().split(' ').filter((word) => word.length >= 4)
 
@@ -117,6 +105,24 @@ function countWordOccurrences(title, text) {
     return result
 }
 
+// função que gera o html com base nos resultados de busca
+function showResults(results) {
+    searchList = ""
+    results.forEach(function (page) {
+        searchList +=
+            "<summary>" +
+            " <span>" + "ID: " + page.id + "</span> " +
+            page.title +
+            " <span>" + page.occurrences + " occurrences" + "</span>" +
+            "<details>" +
+            page.text +
+            "</details>" +
+            "</summary>"
+    })
+    document.getElementById("xmlData").innerHTML = searchList
+}
+
+// gambiarras para css
 const searchEmpty = () => {
     searchList +=
         "<p style='padding: 0 3.5em'>" +
