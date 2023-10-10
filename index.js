@@ -25,9 +25,7 @@ function loadingXml() {
                 var title = page.querySelector("title").textContent
                 var text = page.querySelector("text").textContent
                 cacheXml.push({
-                    id: id,
-                    title: title,
-                    text: text,
+                    data: {id: id, title: title, text: text,},
                     occurrences: countWordOccurrences(title, text)
                 })
             })
@@ -42,6 +40,9 @@ loadingXml()
 const search = () => {
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
+
+    searchList = ""
+
     if (cacheResult[searchTerm]) {
         results = cacheResult[searchTerm]
 
@@ -56,9 +57,7 @@ const search = () => {
             cacheXml.forEach(function (page) {
                 if (page.occurrences[searchTerm]) {
                     pages.push({
-                        id: page.id,
-                        title: page.title,
-                        text: page.text,
+                        content: page,
                         occurrences: page.occurrences[searchTerm]
                     })
                 }
@@ -75,6 +74,7 @@ const search = () => {
             showResults(pages)
         }
     }
+    document.getElementById("xmlData").innerHTML = searchList
 }
 
 // contar as ocorrências, 10 para ocorrência no título, 1 para ocorrência no texto
@@ -107,19 +107,17 @@ function countWordOccurrences(title, text) {
 
 // função que gera o html com base nos resultados de busca
 function showResults(results) {
-    searchList = ""
     results.forEach(function (page) {
         searchList +=
             "<summary>" +
-            " <span>" + "ID: " + page.id + "</span> " +
-            page.title +
+            " <span>" + "ID: " + page.content.data.id + "</span> " +
+            page.content.data.title +
             " <span>" + page.occurrences + " occurrences" + "</span>" +
             "<details>" +
-            page.text +
+            page.content.data.text +
             "</details>" +
             "</summary>"
     })
-    document.getElementById("xmlData").innerHTML = searchList
 }
 
 // gambiarras para css
@@ -129,8 +127,6 @@ const searchEmpty = () => {
         "Nenhum resultado encontrado" +
         "</p>"
 
-    document.getElementById("xmlData").innerHTML = searchList
-    searchList = ""
 }
 
 const addStyle = () => {
