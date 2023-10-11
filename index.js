@@ -20,12 +20,14 @@ function loadingXml() {
             xmlString = parser.parseFromString(xmlString, "text/html")
             pagesArray = xmlString.querySelectorAll("page")
             console.log("tempo de carregamento do xml: ")
-            pagesArray.forEach(function (page) {
+            pagesArray.forEach((page) => {
                 var id = page.querySelector("id").textContent
                 var title = page.querySelector("title").textContent
                 var text = page.querySelector("text").textContent
                 cacheXml.push({
-                    data: {id: id, title: title, text: text,},
+                    id: id,
+                    title: title,
+                    text: text,
                     occurrences: countWordOccurrences(title, text)
                 })
             })
@@ -52,28 +54,86 @@ const search = () => {
         if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 3)) {
             searchEmpty()
         } else {
-            pages = []
+            if (searchTerm.split(' ').length == 1) {
+                pages = []
 
-            cacheXml.forEach(function (page) {
-                if (page.occurrences[searchTerm]) {
-                    pages.push({
-                        content: page,
-                        occurrences: page.occurrences[searchTerm]
+                cacheXml.forEach((page) => {
+                    if (page.occurrences[searchTerm]) {
+                        pages.push({
+                            id: page.id,
+                            title: page.title,
+                            text: page.text,
+                            occurrences: page.occurrences[searchTerm],
+                        })
+                    }
+                })
+
+                pages = pages.sort((a, b) => {
+                    return b.occurrences - a.occurrences
+                }).slice(0, 30)
+
+                cacheResult[searchTerm] = pages
+
+                console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
+
+                showResults(pages)
+            } else {
+                searchTerm = searchTerm.split(' ')
+                words = []
+                pages = []
+
+                cacheXml.forEach((page) => {
+                    if (page.occurrences[searchTerm[0]] && page.occurrences[searchTerm[1]]) {
+                        words.push({
+                            id: page.id,
+                            title: page.title,
+                            text: page.text,
+                            occurrences: page.occurrences[searchTerm[0]] + page.occurrences[searchTerm[1]],
+                            score: 0,
+                            filtered: [...page.title.toLowerCase().split(' '), ...page.text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
+                        })
+                    }
+                })
+
+                words.forEach(word => {
+                    word.filtered.forEach((filter, index) => {
+                        if (index < word.filtered.length && filter === searchTerm[0] && word.filtered[index + 1] === searchTerm[1]) {
+                            word.score += 100
+                        }
                     })
-                }
-            })
+                })
 
-            pages = pages.sort(function (a, b) {
-                return b.occurrences - a.occurrences
-            }).slice(0, 30)
+                words.forEach(word => {
+                    let found = false
+                    word.filtered.forEach((filter, index) => {
+                        if (index < word.filtered.length && filter === searchTerm[0] && word.filtered[index + 1] === searchTerm[1]) {
+                            if (!found) {
+                                pages.push({
+                                    id: word.id,
+                                    title: word.title,
+                                    text: word.text,
+                                    occurrences: word.occurrences,
+                                    score: word.score
+                                })
+                                found = true
+                            }
+                        }
+                    })
+                })
 
-            cacheResult[searchTerm] = pages
+                pages = pages.sort((a, b) => {
+                    return b.score - a.score
+                }).slice(0, 30)
 
-            console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
-            
-            showResults(pages)
+                cacheResult[searchTerm.join(' ')] = pages
+
+                console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
+
+                showResultsWithScore(pages)
+            }
         }
     }
+    console.log(cacheResult)
     document.getElementById("xmlData").innerHTML = searchList
 }
 
@@ -86,7 +146,7 @@ function countWordOccurrences(title, text) {
     title = title.toLowerCase().split(' ').filter((word) => word.length >= 4)
     text = text.toLowerCase().split(' ').filter((word) => word.length >= 4)
 
-    title.forEach(function (word) {
+    title.forEach((word) => {
         if (result[word]) {
             result[word] += 10
         } else {
@@ -94,7 +154,7 @@ function countWordOccurrences(title, text) {
         }
     })
 
-    text.forEach(function (word) {
+    text.forEach((word) => {
         if (result[word]) {
             result[word]++
         } else {
@@ -107,14 +167,28 @@ function countWordOccurrences(title, text) {
 
 // função que gera o html com base nos resultados de busca
 function showResults(results) {
-    results.forEach(function (page) {
+    results.forEach((page) => {
         searchList +=
             "<summary>" +
-            " <span>" + "ID: " + page.content.data.id + "</span> " +
-            page.content.data.title +
+            " <span>" + "ID: " + page.id + "</span> " +
+            page.title +
             " <span>" + page.occurrences + " occurrences" + "</span>" +
             "<details>" +
-            page.content.data.text +
+            page.text +
+            "</details>" +
+            "</summary>"
+    })
+}
+
+function showResultsWithScore(results) {
+    results.forEach((page) => {
+        searchList +=
+            "<summary>" +
+            " <span>" + "ID: " + page.id + "</span> " +
+            page.title +
+            " <span>" + page.occurrences + " occurrences" + "</span>" + " <span>" + "score: " + page.score + "</span>" +
+            "<details>" +
+            page.text +
             "</details>" +
             "</summary>"
     })
