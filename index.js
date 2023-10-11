@@ -1,3 +1,9 @@
+// todo
+// mais de uma palavra na busca
+// mudar o nome filtered
+// otimizar código
+// fazer um readme
+
 const parser = new DOMParser()
 const xhttp = new XMLHttpRequest()
 
@@ -20,7 +26,7 @@ function loadingXml() {
             xmlString = parser.parseFromString(xmlString, "text/html")
             pagesArray = xmlString.querySelectorAll("page")
             console.log("tempo de carregamento do xml: ")
-            pagesArray.forEach((page) => {
+            pagesArray.forEach(page => {
                 var id = page.querySelector("id").textContent
                 var title = page.querySelector("title").textContent
                 var text = page.querySelector("text").textContent
@@ -40,24 +46,29 @@ function loadingXml() {
 loadingXml()
 
 const search = () => {
+    // recebe a consulta do input
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
 
     searchList = ""
 
+    // checa se já existe uma pesquisa no cache
     if (cacheResult[searchTerm]) {
         results = cacheResult[searchTerm]
 
+        // chama a função que cria o html para a página
         showResults(results)
-        console.log(`buscando no cache o termo "${searchTerm}"`)
     } else {
-        if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 3)) {
+        // elimina buscas em vazio, espaço em branco ou palavras com menos que 5 caracteres
+        if ((searchTerm === "") || (searchTerm === " ") || (searchTerm.length <= 4)) {
             searchEmpty()
         } else {
+            // verifica se a busca é composta ou não
             if (searchTerm.split(' ').length == 1) {
                 pages = []
 
-                cacheXml.forEach((page) => {
+                // passa pelo cache do xml buscando ocorrências da busca e insere as "páginas dentro de um array"
+                cacheXml.forEach(page => {
                     if (page.occurrences[searchTerm]) {
                         pages.push({
                             id: page.id,
@@ -68,21 +79,25 @@ const search = () => {
                     }
                 })
 
+                // faz a ordenação com base nas ocorrências e resume o array a somente 30 elementos
                 pages = pages.sort((a, b) => {
                     return b.occurrences - a.occurrences
                 }).slice(0, 30)
 
+                // salva em cache termo e a busca
                 cacheResult[searchTerm] = pages
 
-                console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
-
+                // chama a função que cria o html para a página
                 showResults(pages)
             } else {
                 searchTerm = searchTerm.split(' ')
                 words = []
                 pages = []
 
-                cacheXml.forEach((page) => {
+                // passa pelo cache e cria um array com as "páginas" que ocorram os dois termos de busca...
+                // ...mesmo que separadamente, neste array tbm serão inseridos score e um array com título... 
+                // ...e texto juntos
+                cacheXml.forEach(page => {
                     if (page.occurrences[searchTerm[0]] && page.occurrences[searchTerm[1]]) {
                         words.push({
                             id: page.id,
@@ -95,6 +110,9 @@ const search = () => {
                     }
                 })
 
+                // verifica se dentro do array existe ocorrências onde o primeiro e segundo termo da busca...
+                // ...estão em sequência e dá 100 pontos no score para cada ocorrência, isso foi feito...
+                // ...por entender que não são ocorrências como as que ocorrem em título e texto
                 words.forEach(word => {
                     word.filtered.forEach((filter, index) => {
                         if (index < word.filtered.length && filter === searchTerm[0] && word.filtered[index + 1] === searchTerm[1]) {
@@ -103,6 +121,7 @@ const search = () => {
                     })
                 })
 
+                // cria um array de "páginas" com a mesma condição anterior: os termos devem estar juntos
                 words.forEach(word => {
                     let found = false
                     word.filtered.forEach((filter, index) => {
@@ -121,19 +140,19 @@ const search = () => {
                     })
                 })
 
+                // faz a ordenação com base no score e resume o array a somente 30 elementos
                 pages = pages.sort((a, b) => {
                     return b.score - a.score
                 }).slice(0, 30)
 
+                // salva em cache termo e a busca
                 cacheResult[searchTerm.join(' ')] = pages
 
-                console.log(`fazendo uma nova pesquisa com o termo "${searchTerm}"`)
-
+                // chama a função que cria o html para a página
                 showResultsWithScore(pages)
             }
         }
     }
-    console.log(cacheResult)
     document.getElementById("xmlData").innerHTML = searchList
 }
 
@@ -146,7 +165,7 @@ function countWordOccurrences(title, text) {
     title = title.toLowerCase().split(' ').filter((word) => word.length >= 4)
     text = text.toLowerCase().split(' ').filter((word) => word.length >= 4)
 
-    title.forEach((word) => {
+    title.forEach(word => {
         if (result[word]) {
             result[word] += 10
         } else {
@@ -154,7 +173,7 @@ function countWordOccurrences(title, text) {
         }
     })
 
-    text.forEach((word) => {
+    text.forEach(word => {
         if (result[word]) {
             result[word]++
         } else {
@@ -167,7 +186,7 @@ function countWordOccurrences(title, text) {
 
 // função que gera o html com base nos resultados de busca
 function showResults(results) {
-    results.forEach((page) => {
+    results.forEach(page => {
         searchList +=
             "<summary>" +
             " <span>" + "ID: " + page.id + "</span> " +
@@ -181,7 +200,7 @@ function showResults(results) {
 }
 
 function showResultsWithScore(results) {
-    results.forEach((page) => {
+    results.forEach(page => {
         searchList +=
             "<summary>" +
             " <span>" + "ID: " + page.id + "</span> " +
