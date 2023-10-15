@@ -1,6 +1,4 @@
 // todo
-// mais de uma palavra na busca
-// mudar o nome filtered
 // otimizar código
 // fazer um readme
 
@@ -46,6 +44,7 @@ function loadingXml() {
 loadingXml()
 
 const search = () => {
+    console.log(cacheXml)
     // recebe a consulta do input
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
@@ -105,18 +104,18 @@ const search = () => {
                             text: page.text,
                             occurrences: page.occurrences[searchTerm[0]] + page.occurrences[searchTerm[1]],
                             score: 0,
-                            filtered: [...page.title.toLowerCase().split(' '), ...page.text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
+                            textToFilter: [...page.title.toLowerCase().split(' '), ...page.text.toLowerCase().split(' ')].filter((word) => word.length >= 4)
                         })
                     }
                 })
 
                 // verifica se dentro do array existe ocorrências onde o primeiro e segundo termo da busca...
-                // ...estão em sequência e dá 100 pontos no score para cada ocorrência, isso foi feito...
+                // ...estão em sequência e dá 1 ponto no score para cada ocorrência, isso foi feito...
                 // ...por entender que não são ocorrências como as que ocorrem em título e texto
                 words.forEach(word => {
-                    word.filtered.forEach((filter, index) => {
-                        if (index < word.filtered.length && filter === searchTerm[0] && word.filtered[index + 1] === searchTerm[1]) {
-                            word.score += 100
+                    word.textToFilter.forEach((filter, index) => {
+                        if (index < word.textToFilter.length && filter === searchTerm[0] && word.textToFilter[index + 1] === searchTerm[1]) {
+                            word.score += 1
                         }
                     })
                 })
@@ -124,8 +123,8 @@ const search = () => {
                 // cria um array de "páginas" com a mesma condição anterior: os termos devem estar juntos
                 words.forEach(word => {
                     let found = false
-                    word.filtered.forEach((filter, index) => {
-                        if (index < word.filtered.length && filter === searchTerm[0] && word.filtered[index + 1] === searchTerm[1]) {
+                    word.textToFilter.forEach((filter, index) => {
+                        if (index < word.textToFilter.length && filter === searchTerm[0] && word.textToFilter[index + 1] === searchTerm[1]) {
                             if (!found) {
                                 pages.push({
                                     id: word.id,
