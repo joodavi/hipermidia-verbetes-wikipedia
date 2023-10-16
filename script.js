@@ -44,7 +44,6 @@ function loadingXml() {
 loadingXml()
 
 const search = () => {
-    console.log(cacheXml)
     // recebe a consulta do input
     searchTerm = document.getElementById("searchInput").value.toLowerCase()
     searchButton.addEventListener("click", addStyle())
